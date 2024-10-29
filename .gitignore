@@ -1,1 +1,3 @@
-.pynb_checkpoints/*
+.pynb_checkpoints/
+.mypy_cache/
+__pycache__/
