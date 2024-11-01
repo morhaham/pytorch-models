@@ -1,10 +1,11 @@
 """Run regression model."""
 
-from model import ManualLinearRegression
 import torch
-import torchg.nn as nn
-import torch.optim as optim
 import numpy as np
+
+from data_prep.v0 import prepare_data
+from model_config.v0 import config_model
+from model_training.v0 import train_model
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -25,26 +26,9 @@ val_idx = idx[int(N * 0.8):]
 
 x_train, y_train = x[train_idx], y[train_idx]
 x_val, y_val = x[val_idx], y[val_idx]
-x_train_tensor = torch.as_tensor(x_train).to(device)
-y_train_tensor = torch.as_tensor(y_train).to(device)
 
-lr = 0.1
-torch.manual_seed(42)
-model = ManualLinearRegression().to(device)
-optimizer = optim.SGD(model.parameters(), lr=lr)
-
-loss_fn = nn.MSELoss(reduction="mean")
-n_epochs = 1000
-
-for epoch in range(n_epochs):
-    model.train()
-    yhat = model(x_train_tensor)
-
-    loss = loss_fn(yhat, y_train_tensor)
-    loss.backward()
-
-    optimizer.step()
-    optimizer.zero_grad()
+(x_train_tensor, y_train_tensor) = prepare_data(x_train, y_train)
+(model, optimizer, loss_fn) = config_model()
+train_model(model, loss_fn, optimizer, x_train_tensor, y_train_tensor)
 
 print(model.state_dict())
-print(list(model.parameters()))
