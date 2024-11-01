@@ -3,9 +3,9 @@
 import torch
 import numpy as np
 
-from data_prep.v0 import prepare_data
-from model_config.v0 import config_model
-from model_training.v0 import train_model
+from data_prep.v1 import prepare_data
+from model_config.v1 import config_model
+from model_training.v2 import train_model
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -27,8 +27,9 @@ val_idx = idx[int(N * 0.8):]
 x_train, y_train = x[train_idx], y[train_idx]
 x_val, y_val = x[val_idx], y[val_idx]
 
-(x_train_tensor, y_train_tensor) = prepare_data(x_train, y_train)
-(model, optimizer, loss_fn) = config_model()
-train_model(model, loss_fn, optimizer, x_train_tensor, y_train_tensor)
+train_data = prepare_data(x_train, y_train)
+
+train_step_fn, model = config_model()
+losses = train_model(train_data, train_step_fn)
 
 print(model.state_dict())
