@@ -1,11 +1,11 @@
 """Run regression model."""
 
-import torch
 import numpy as np
+import torch
 
-from data_prep.v1 import prepare_data
-from model_config.v1 import config_model
-from model_training.v2 import train_model
+from data_prep import prepare_data
+from model_config import config_model
+from model_training import train_model
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -22,14 +22,14 @@ idx = np.arange(N)
 np.random.shuffle(idx)
 
 train_idx = idx[: int(N * 0.8)]
-val_idx = idx[int(N * 0.8):]
+val_idx = idx[int(N * 0.8) :]
 
 x_train, y_train = x[train_idx], y[train_idx]
 x_val, y_val = x[val_idx], y[val_idx]
 
 train_data = prepare_data(x_train, y_train)
 
-train_step_fn, model = config_model()
-losses = train_model(train_data, train_step_fn)
+train_step_fn, model = config_model(device)
+losses = train_model(train_data, train_step_fn, device)
 
 print(model.state_dict())
