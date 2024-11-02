@@ -3,15 +3,20 @@
 from collections.abc import Iterable
 
 import torch
-from torch.utils.data import DataLoader, TensorDataset
-
-TrainLoader = Iterable[list[float]]
+from torch.utils.data import DataLoader, TensorDataset, random_split
 
 
-def prepare_data(x_train: torch.tensor, y_train: torch.tensor) -> TrainLoader:
+def prepare_data(x: torch.tensor, y: torch.tensor) -> tuple[DataLoader, DataLoader]:
     """Prepare data."""
-    x_train_tensor = torch.as_tensor(x_train, dtype=torch.float)
-    y_train_tensor = torch.as_tensor(y_train, dtype=torch.float)
-    train_data = TensorDataset(x_train_tensor, y_train_tensor)
+    torch.manual_seed(13)
+    x_tensor = torch.as_tensor(x, dtype=torch.float)
+    y_tensor = torch.as_tensor(y, dtype=torch.float)
+    dataset = TensorDataset(x_tensor, y_tensor)
+    ratio = 0.8
+    n_total = len(dataset)
+    n_train = int(n_total * ratio)
+    n_val = n_total - n_train
+    train_data, val_data = random_split(dataset, [n_train, n_val])
     train_loader = DataLoader(dataset=train_data, batch_size=16, shuffle=True)
-    return train_loader
+    val_loader = DataLoader(dataset=val_data, batch_size=16)
+    return train_loader, val_loader
