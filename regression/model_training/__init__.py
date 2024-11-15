@@ -11,18 +11,30 @@ PerformTrainStepFn = PerformValStepFn = Callable[[tensor, tensor], Loss]
 
 
 def train_model(
-    train_loader: DataLoader, val_loader: DataLoader, train_step_fn, val_step_fn, device
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    train_step_fn,
+    val_step_fn,
+    device,
+    summary_writer,
+    n_epochs,
+    losses,
+    val_losses,
 ) -> list[Loss]:
     """Train model."""
-    n_epochs = 200
-    losses = []
-    val_losses = []
     for epoch in range(n_epochs):
         loss = mini_batch(train_loader, train_step_fn, device)
         losses.append(loss)
         with torch.no_grad():
-            loss = mini_batch(val_loader, val_step_fn, device)
-            val_losses.append(loss)
+            val_loss = mini_batch(val_loader, val_step_fn, device)
+            val_losses.append(val_loss)
+
+        summary_writer.add_scalars(
+            main_tag="loss",
+            tag_scalar_dict={"training": loss, "validation": val_loss},
+            global_step=epoch,
+        )
+    summary_writer.close()
     return losses, val_losses
 
 
