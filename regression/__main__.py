@@ -6,8 +6,8 @@ import numpy as np
 import torch
 
 from data_prep import prepare_data
-from model_config import config_model, load_model_state
-from model_training import train_model
+from model_config import config_model
+from model_training import load_model_state, save_model_state, train_model
 from viz import plot_losses
 
 args = sys.argv[1:]
@@ -53,5 +53,6 @@ losses, val_losses = train_model(
     saved_val_losses,
 )
 
+save_model_state(model, n_epochs, optimizer, losses, val_losses)
 print(model.state_dict())
 # plot_losses(losses, val_losses)

@@ -35,24 +35,3 @@ def config_model(
         optimizer,
         summary_writer,
     )
-
-
-def save_model_state(model, n_epochs, optimizer, loss, val_loss):
-    checkpoint = {
-        "epoch": n_epochs,
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-        "loss": losses,
-        "val_loss": val_loss,
-    }
-    torch.save(checkpoint, "model_checkpoint.pth")
-
-
-def load_model_state(model, optimizer):
-    checkpoint = torch.load("model_checkpoint.pth")
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_sate_dict"])
-    saved_epoch = checkpoint["epoch"]
-    saved_losses = checkpoint["loss"]
-    saved_val_losses = checkpoint["val_loss"]
-    return saved_epoch, saved_losses, saved_val_losses

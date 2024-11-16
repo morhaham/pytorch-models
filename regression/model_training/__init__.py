@@ -78,3 +78,24 @@ def make_val_step_fn(model, loss_fn) -> PerformTrainStepFn:
         return loss.item()
 
     return perform_val_step_fn
+
+
+def save_model_state(model, n_epochs, optimizer, losses, val_losses):
+    checkpoint = {
+        "epoch": n_epochs,
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "losses": losses,
+        "val_losses": val_losses,
+    }
+    torch.save(checkpoint, "model_checkpoint.pth")
+
+
+def load_model_state(model, optimizer):
+    checkpoint = torch.load("model_checkpoint.pth")
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    saved_epoch = checkpoint["epoch"]
+    saved_losses = checkpoint["losses"]
+    saved_val_losses = checkpoint["val_losses"]
+    return saved_epoch, saved_losses, saved_val_losses
