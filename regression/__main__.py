@@ -56,3 +56,8 @@ losses, val_losses = train_model(
 save_model_state(model, n_epochs, optimizer, losses, val_losses)
 print(model.state_dict())
 # plot_losses(losses, val_losses)
+
+# Predictions
+model.eval()1
+new_inputs = torch.tensor([[0.20], [0.34], [0.57]])
+print(model(new_inputs.to(device)))
