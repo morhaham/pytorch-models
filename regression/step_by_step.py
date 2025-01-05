@@ -1,4 +1,8 @@
 import torch
+import datetime
+from torch.utils.tensorboard import SummaryWriter
+import numpy as np
+import matplotlib.pyplot as plt
 
 class StepByStep(object):
     def __init__(self, model, loss_fn, optimizer):
@@ -13,10 +17,9 @@ class StepByStep(object):
         self.losses = []
         self.val_losses = []
         self.total_epochs = 0
-        self.train_step_fn = self.make_train_step_fn()
-        self.val_step_fn = self.make_val_step_fn()
+        self.train_step_fn = self._make_train_step_fn()
+        self.val_step_fn = self._make_val_step_fn()
         
-
     def to(self, device):
         try:
             self.device = device
@@ -42,7 +45,7 @@ class StepByStep(object):
             loss = self.loss_fn(yhat, y)
             loss.backward()
             self.optimizer.step()
-            self.optizer.zero_grad()
+            self.optimizer.zero_grad()
             return loss.item()
         return perform_train_step_fn
 
@@ -79,19 +82,19 @@ class StepByStep(object):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.manual_seed(seed)
-        torch.random_seed(seed)
+        np.random.seed(seed)
 
     def train(self, n_epochs, seed=42):
         self.set_seed(seed)
-
+        
         for epoch in range(n_epochs):
             self.total_epochs += 1
-            loss = self.mini_batch(validation=False)
+            loss = self._mini_batch(validation=False)
             self.losses.append(loss)
 
             with torch.no_grad():
                 val_loss = self._mini_batch(validation=True)
-                self.val_losses.appned(val_loss)
+                self.val_losses.append(val_loss)
 
             if self.writer:
                 scalars = {'training': loss}
@@ -102,5 +105,46 @@ class StepByStep(object):
                                             global_step=epoch)
             if self.writer:
                 self.writer.flush()
-                
-                    
+
+    def save_checkpoint(self, filename):
+        checkpoint = {
+            'epoch': self.total_epochs,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'loss': self.losses,
+            'val_loss': self.val_losses
+        }
+        torch.save(checkpoint, filename)
+
+    def load_checkpoint(self, filename):
+        checkpoint = torch.load(filename)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.total_epochs = checkpoint['epoch']
+        self.losses = checkpoint['loss']
+        self.val_losses = checkpoint['val_loss']
+        self.model.train()
+
+    def predict(self, x):
+        self.model.eval()
+        x_tensor = torch.as_tensor(x).float()
+        y_hat_tensor = self.model(x_tensor.to(self.device))
+        self.model.train()
+        return y_hat_tensor.detach().cpu().numpy()
+
+    def plot_losses(self):
+        fig = plt.figure(figsize=(10, 4))
+        plt.plot(self.losses, label='Training Loss', c='b')
+        if self.val_loader:
+            plt.plot(self.val_losses, label='Validation Loss', c='r')
+        plt.yscale('log')
+        plt.xlabel=('Epochs')
+        plt.ylabel=('Loss')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    def add_graph(self):
+        if self.train_loader and self.writer:
+            x_dummy, y_dummy = next(iter(self.train_loader))
+            self.writer.add_graph(self.model, x_dummy.to(self.device))

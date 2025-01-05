@@ -1,65 +1,43 @@
-"""Run regression model."""
-
-import sys
-
 import numpy as np
 import torch
-
-from data_prep import prepare_data
-from model_config import config_model
-from model_training import load_model_state, save_model_state, train_model
 from viz import plot_losses
+from torch.utils.data import DataLoader, TensorDataset, random_split
+import torch.nn as nn
+import torch.optim as optim
+from step_by_step import StepByStep
+import matplotlib.pyplot as plt
+from utils import data_generate, data_prepare, model_config
 
-args = sys.argv[1:]
-should_load_model = "--load" in args
+# Synthatic Data generation
+x, y = data_generate()
+# 
 
-print(should_load_model)
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# Data preperation
+train_loader, val_loader = data_prepare(x, y)
+# 
 
-true_b = 1
-true_w = 2
-N = 100
+# Model configuration
+lr, model, optimizer, loss_fn = model_config()
+#
 
-np.random.seed(42)
-x = np.random.rand(N, 1)
-epsilon = 0.1 * np.random.randn(N, 1)
-y = true_b + true_w * x + epsilon
+sbs = StepByStep(model, loss_fn, optimizer)
+sbs.set_loaders(train_loader, val_loader)
+sbs.set_tensorboard('classy')
 
-train_loader, val_loader = prepare_data(x, y)
+sbs.train(n_epochs=200)
 
-train_step_fn, val_step_fn, model, optimizer, summary_writer = config_model(
-    device, train_loader
-)
+print(model.state_dict())
+print(sbs.total_epochs)
 
-saved_epoch = 0
-saved_losses = []
-saved_val_losses = []
-if should_load_model:
-    saved_epoch, saved_losses, saved_val_losses = load_model_state(model, optimizer)
+sbs.save_checkpoint('model_checkpoint.pth')
 
-n_epochs = saved_epoch if saved_epoch > 0 else 200
-losses = saved_losses if len(saved_losses) > 0 else []
-val_losses = saved_val_losses if len(saved_val_losses) > 0 else []
-
-losses, val_losses = train_model(
-    train_loader,
-    val_loader,
-    train_step_fn,
-    val_step_fn,
-    device,
-    summary_writer,
-    n_epochs,
-    saved_losses,
-    saved_val_losses,
-)
-
-save_model_state(model, n_epochs, optimizer, losses, val_losses)
-print("model state:", model.state_dict())
-# plot_losses(losses, val_losses)
+# plt = sbs.plot_losses()
+# plt.show()
 
 # Predictions
-if (should_load_model):
-    model.eval()
-    print("evaluates for x1=0.20, x2=0.34, x3 =0.57")
-    new_inputs = torch.tensor([[0.20], [0.34], [0.57]])
-    print("prediction result: \n", model(new_inputs.to(device)))
+new_data = np.array([.5, .3, .7, 2, 7]).reshape(-1, 1)
+print(f'Making predictions with the given years of experience: {new_data}')
+predictions = sbs.predict(new_data)
+print(f'The predicted salaries(thousands of dollars): {predictions}')
+# 
+
