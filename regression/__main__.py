@@ -1,10 +1,16 @@
+import os
+import sys
+
+here = os.path.dirname(__file__)
+sys.path.append(os.path.join(here, '..'))
+
 import numpy as np
 import torch
 from viz import plot_losses
 from torch.utils.data import DataLoader, TensorDataset, random_split
 import torch.nn as nn
 import torch.optim as optim
-from step_by_step import StepByStep
+from pipeline import Pipeline
 import matplotlib.pyplot as plt
 from utils import data_generate, data_prepare, model_config
 
@@ -20,7 +26,7 @@ train_loader, val_loader = data_prepare(x, y)
 lr, model, optimizer, loss_fn = model_config()
 #
 
-sbs = StepByStep(model, loss_fn, optimizer)
+sbs = Pipeline(model, loss_fn, optimizer)
 sbs.set_loaders(train_loader, val_loader)
 sbs.set_tensorboard('classy')
 

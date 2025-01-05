@@ -4,7 +4,6 @@ from viz import plot_losses
 from torch.utils.data import DataLoader, TensorDataset, random_split
 import torch.nn as nn
 import torch.optim as optim
-from step_by_step import StepByStep
 import matplotlib.pyplot as plt
 
 
